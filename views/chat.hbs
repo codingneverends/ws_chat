@@ -1,0 +1,265 @@
+<div>
+    <style>
+            *{
+                margin: 0px;
+                padding: 0px;
+            }
+            *:focus{
+                outline: none;
+            }
+            .topbar{
+                padding: 20px;
+                color: white;
+                background: #000000af;
+            }
+            .mbox{
+                width: calc(100% - 30px);
+                max-width: 800px;
+                margin-left: 50%;
+                transform: translateX(-50%);
+            }
+            #chats{
+                height: 55vh;
+                overflow-y: scroll;
+                border-bottom: 2px solid black;
+            }
+            #chats .ele{
+                margin: 10px;
+                padding: 10px;
+                border: 1px solid black;
+                border-radius: 10px;
+            }
+            #chats .ele .df{
+                display: flex;
+            }
+            #chats .ele .df .eleg1{
+                flex-grow: 1;
+            }
+            ::-webkit-scrollbar{
+                width: 2px;
+                background: transparent;
+            }
+            #add{
+                min-width: 400px;
+                margin: 10px;
+                margin: auto;
+                padding: 10px;
+                margin-left: 50%;
+                transform: translateX(-50%);
+            }
+            #add .indiv_{
+                display: flex;
+            }
+            #add .indiv input{
+                margin: 10px;
+                padding: 10px;
+                min-width: 300px;
+                border: 1px solid black;
+                border-radius: 10px;
+            }
+            #add .indiv button{
+                margin: 10px;
+                padding: 10px;
+                border-width: 2px;
+                border-radius: 10px;
+            }
+            #_name .indiv_ input{
+                width: 300px;
+                border: none;
+                border-radius: 10px;
+            }
+            #_name input[type='text']{
+                border-radius: 0px;
+                border-bottom: 1px solid black;
+            }
+            .icns{
+                padding: 10px;
+            }
+    </style>
+    <div class="topbar">
+        <div style="display: flex;align-items:center;">
+            <h1 style="flex-grow: 1;">ChatBox</h1>
+            <h2 id="dis" style="margin-right: 5%;">Online : 0</h2>
+        </div>
+    </div>
+    <div class="mbox">
+        <div id="chats">
+            <!--Inject Chats-->
+        </div>
+        <div id="add">
+            <div class="indiv">
+                <div class="indiv_">
+                    <input type="text">
+                    <button onclick="chat_.add()">send</button>
+                </div>
+                <div id="_name">
+                    <div class="indiv_">
+                    <input type="button" value="Anonymous">
+                    <button onclick="chat_.setname()">Edit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        //WebSocket JS
+            var chat_;
+            const ws= new WebSocket('ws://localhost:3002/','echo-protocol');
+            var ws_active=0;
+            ws.onopen=()=>{
+                ws_active=1;
+                console.log("WS connected");
+                chat_=new Chat("Anonymous");
+                _json=getjson("_updates");
+                continous_req(_json);// 5 requests per second
+            }
+            var last_updates="";
+            ws.onmessage=(msg)=>{
+                var _data=JSON.parse(msg.data);
+                if(_data.err){
+                    console.warn(_data.error);
+                }
+                else{
+                    if(_data.action=="_updates"){
+                        if(JSON.stringify(last_updates)==JSON.stringify(_data.data)){
+                            console.log("No new updates");
+                        }
+                        else{
+                            console.log("Updates are there");
+
+                            //Put Updates here acccodingly
+                            chat_.get();
+                            //console.log(_data.data,last_updates);
+                            last_updates=_data.data;
+                            getusers();
+                        }
+                    }
+                    else{
+                        if(_data.action=="get"){
+                            inject(_data.data);
+                            chat_.entries=_data.data;
+                        }
+                        if(_data.description=="getusers"){
+                            document.getElementById("dis").innerText=`Online : ${_data.data}`;
+                        }   
+                    }
+                }
+            }
+            ws.onerror=(e)=>{
+                console.log(e);
+            }
+            ws.onclose=()=>{
+                ws_active=0;
+                console.log("Unexpected ShutDown of server");
+            }
+
+
+
+            function inject(_chats){
+                chats=document.getElementById("chats");
+                chats.innerHTML="";
+                for(var i=0;i<_chats.length;i++){
+                    var date = new Date(Number(_chats[i].time)).toLocaleTimeString();
+                    this.chats.innerHTML+=`
+                    <div class="ele">
+                        <div class="df">
+                            <div class="eleg1">
+                                <div class="name">
+                                    ${_chats[i].name}
+                                </div>
+                                <div class="msg">
+                                ${_chats[i].msg}
+                                </div>
+                            </div>
+                            <div class="time">
+                                ${date.split(":")[0]+":"+date.split(":")[1]+" "+date.split(" ")[1]}
+                                <div class="df">
+                                    <div class="icns" onclick="chat_.delete('${_chats[i].time}')"><i class="fa fa-trash" aria-hidden="true"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+                this.chats.scrollTop=this.chats.scrollHeight-this.chats.clientHeight;
+            }
+
+            class Chat{
+                constructor(name="Anonymous"){
+                    this.status="constructed";
+                    this.name=name;
+                    this.entries=[];
+                }
+                add(description={}){
+                    var msgdiv=document.getElementById("add").children[0].children[0].children[0];
+                    var msg=msgdiv.value.trim();
+                    if(msg.length<1){
+                        return;
+                    }
+                    var _msg={};
+                    _msg['name']=chat_.name;
+                    _msg['msg']=msg;
+                    _msg['time']=new Date().getTime();
+                    
+                    var req=getjson("add");
+                    req.description=description;
+                    req.json=_msg;
+                    //console.log(req);
+                    ws.send(JSON.stringify(req));
+                }
+                get(condition={},description={}){
+                    var req=getjson("get");
+                    req.description=description;
+                    req.condition=condition;
+                    ws.send(JSON.stringify(req));
+                }
+                setname(){
+                    var nm=document.getElementById("_name");
+                    var input=nm.children[0].children[0];
+                    var btn=nm.children[0].children[1];
+                    if(input.type=="text"){
+                        input.type="button";
+                        btn.innerHTML="Edit";
+                        chat_.name=input.value;
+                    }
+                    else{
+                        input.type="text";
+                        btn.innerHTML="Set";
+                    }
+                }
+                delete(ele){
+                    var req=getjson("delete");
+                    req.json=ele;
+                    //console.log(ele);
+                    ws.send(JSON.stringify(req));
+                }
+            }
+            
+            function getjson(action="_updates"){
+                return {
+                    description : "nil",
+                    data : "",
+                    err : false,
+                    action : action,
+                    json : {},
+                    condition : {},
+                    id : "",
+                }
+            }
+            async function continous_req(json){
+                if(ws_active==0)return;
+                ws.send(JSON.stringify(json));
+                await timer(200);
+                continous_req(json);
+            }
+            function timer(ms){
+                return new Promise(res=>setTimeout(res,ms));
+            }
+            function getusers(){
+                var json__=getjson("nil");
+                json__.action="nil";
+                json__.description="getusers";
+                ws.send(JSON.stringify(json__));
+            }
+    </script>
+</div>
