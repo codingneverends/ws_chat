@@ -1,8 +1,16 @@
 <div>
     <style>
+            :root {
+                --col: #00ff00af;
+                --col2: #00ff00af;
+            }
             *{
                 margin: 0px;
                 padding: 0px;
+                color : white;
+            }
+            body{
+                background: black;
             }
             *:focus{
                 outline: none;
@@ -10,7 +18,7 @@
             .topbar{
                 padding: 20px;
                 color: white;
-                background: #000000af;
+                background: var(--col);
             }
             .mbox{
                 width: calc(100% - 30px);
@@ -21,12 +29,12 @@
             #chats{
                 height: 55vh;
                 overflow-y: scroll;
-                border-bottom: 2px solid black;
+                border-bottom: 2px solid var(--col);
             }
             #chats .ele{
                 margin: 10px;
                 padding: 10px;
-                border: 1px solid black;
+                border: 1px solid var(--col);
                 border-radius: 10px;
             }
             #chats .ele .df{
@@ -54,14 +62,22 @@
                 margin: 10px;
                 padding: 10px;
                 min-width: 300px;
-                border: 1px solid black;
+                border: 1px solid var(--col);
+                background: black;
                 border-radius: 10px;
+                color: white;
+            }
+            #add .indiv input::placeholder{
+                color: var(--col);
+                opacity: 0.8;
             }
             #add .indiv button{
                 margin: 10px;
                 padding: 10px;
                 border-width: 2px;
                 border-radius: 10px;
+                background: black;
+                border: 2px solid var(--col);
             }
             #_name .indiv_ input{
                 width: 300px;
@@ -70,7 +86,9 @@
             }
             #_name input[type='text']{
                 border-radius: 0px;
-                border-bottom: 1px solid black;
+                border-bottom: 1px solid var(--col);
+                background: black;
+                color: white;
             }
             .icns{
                 padding: 10px;
@@ -89,7 +107,7 @@
         <div id="add">
             <div class="indiv">
                 <div class="indiv_">
-                    <input type="text">
+                    <input type="text" placeholder="Enter message">
                     <button onclick="chat_.add()">send</button>
                 </div>
                 <div id="_name">
@@ -102,6 +120,13 @@
         </div>
     </div>
     <script>
+        //set random color
+        document.querySelector(':root').style.setProperty('--col',rancol());
+        function rancol(){
+            const cols=["red","blue","green","orange","pink","yellow"]
+            var val=Math.floor(Math.random()*cols.length);
+            return cols[val];
+        }
         //WebSocket JS
             var chat_;
             const ws= new WebSocket('ws://localhost:3002/','echo-protocol');
