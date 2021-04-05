@@ -152,8 +152,9 @@
                             console.log("No new updates");
                         }
                         else{
+                            //Updates are checked by clients
+                            //Can be done in server and send updates earlier( save one call per updates)
                             console.log("Updates are there");
-
                             //Put Updates here acccodingly
                             chat_.get();
                             //console.log(_data.data,last_updates);
