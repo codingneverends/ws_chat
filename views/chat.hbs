@@ -83,8 +83,10 @@
                 width: 300px;
                 border: none;
                 border-radius: 10px;
+                border: 1px solid var(--col);
             }
             #_name input[type='text']{
+                border: none;
                 border-radius: 0px;
                 border-bottom: 1px solid var(--col);
                 background: black;
@@ -94,13 +96,13 @@
                 padding: 10px;
             }
     </style>
+    <div class="mbox">
     <div class="topbar">
         <div style="display: flex;align-items:center;">
             <h1 style="flex-grow: 1;">ChatBox</h1>
             <h2 id="dis" style="margin-right: 5%;">Online : 0</h2>
         </div>
     </div>
-    <div class="mbox">
         <div id="chats">
             <!--Inject Chats-->
         </div>
@@ -123,7 +125,7 @@
         //set random color
         document.querySelector(':root').style.setProperty('--col',rancol());
         function rancol(){
-            const cols=["red","blue","green","orange","pink","yellow"]
+            const cols=["red","blue","green","orange","#c500e5","#bce10a"]
             var val=Math.floor(Math.random()*cols.length);
             return cols[val];
         }
